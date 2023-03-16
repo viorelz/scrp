@@ -1,0 +1,31 @@
+#!/bin/bash
+
+prg="curl -s -O"
+
+set -e
+cd /usr/share/GeoIP/ 2>/dev/null
+touch GeoIP.dat GeoLiteCity.dat GeoIPv6.dat
+
+$prg http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz
+rm -f GeoIP.dat.gz.1
+mv GeoIP.dat GeoIP.dat.old
+gunzip GeoIP.dat.gz
+
+$prg http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+rm -f GeoLiteCity.dat.gz.1
+mv GeoLiteCity.dat GeoLiteCity.old
+gunzip GeoLiteCity.dat.gz
+
+$prg http://geolite.maxmind.com/download/geoip/database/GeoIPv6.dat.gz
+rm -f GeoIPv6.dat.gz.1
+mv GeoIPv6.dat GeoIPv6.old
+gunzip GeoIPv6.dat.gz
+
+set +e
+
+if [ "$1" = "--no-reload" ]; then
+	exit 0
+fi
+
+/etc/init.d/php-fpm restart
+

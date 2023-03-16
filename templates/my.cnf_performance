@@ -1,0 +1,89 @@
+[client]
+port    = 3306
+socket    = /var/lib/mysql/mysql.sock
+
+[mysqld_safe]
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+socket    = /var/lib/mysql/mysql.sock
+nice    = 0
+
+[mysqld]
+user    = mysql
+pid-file  = /var/run/mysqld/mysqld.pid
+socket    = /var/lib/mysql/mysql.sock
+port      = 3306
+basedir   = /usr
+datadir   = /var/lib/mysql
+tmpdir    = /tmp
+skip-external-locking
+
+
+bind-address    = 127.0.0.1
+ 
+
+myisam-recover     = BACKUP
+log_error          = /var/log/mysqld.log
+expire_logs_days   = 10
+#max_binlog_size    = 100M
+
+
+long_query_time=1
+log-slow-queries=ON
+log-slow-queries=/var/log/mysql-slow-queries.log
+
+tmpdir=/tmp
+max_connections = 100
+wait_timeout=60
+interactive_timeout=120
+lock_wait_timeout=60
+key_buffer_size = 16M
+max_allowed_packet = 20M
+table_cache = 4096
+open_files_limit = 65536
+tmp_table_size=256M
+max_heap_table_size=256M
+join_buffer_size = 256k
+sort_buffer_size = 512k
+read_buffer_size = 512k
+read_rnd_buffer_size = 512k
+bulk_insert_buffer_size = 8M
+
+thread_stack       = 192K
+thread_cache_size = 16
+
+#query_cache_limit = 2M
+##query_cache_size = 64M
+##query_cache_type = 1
+##query_prealloc_size = 16384
+##query_alloc_block_size = 16384
+#
+## Try number of CPU's*2 for thread_concurrency
+thread_concurrency = 16
+
+innodb
+innodb_additional_mem_pool_size          = 12M
+innodb_buffer_pool_size                  = 2048M
+innodb_checksums
+innodb_doublewrite
+innodb_fast_shutdown                     = 0
+innodb_flush_log_at_trx_commit           = 2
+innodb_flush_method                      = O_DIRECT
+innodb_lock_wait_timeout                 = 30
+innodb_max_dirty_pages_pct               = 90
+innodb_max_purge_lag                     = 0
+innodb_mirrored_log_groups               = 1
+innodb_open_files                        = 300
+innodb_status_file
+innodb_thread_concurrency                = 16
+
+innodb_file_per_table
+
+
+[mysqldump]
+quick
+quote-names
+max_allowed_packet = 16M
+[mysql]
+[isamchk]
+key_buffer    = 16M

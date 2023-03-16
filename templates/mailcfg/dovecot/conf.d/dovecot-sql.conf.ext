@@ -1,0 +1,9 @@
+driver = mysql
+connect = host=localhost dbname=pfa user=pfau password=kM1V2K-@0Q
+default_pass_scheme = SHA512-CRYPT
+
+# following should all be on one line.
+password_query = SELECT username as user, password, concat('/home/vmail/', maildir) as userdb_home, concat('maildir:/home/vmail/', maildir, 'Maildir/') as userdb_mail, 1017 as userdb_uid, 12 as userdb_gid FROM mailbox WHERE username = '%u' AND active = '1'
+
+# following should all be on one line
+user_query = SELECT concat('/home/vmail/', maildir) as home, concat('maildir:/home/vmail/', maildir, 'Maildir/') as mail, 1017 AS uid, 12 AS gid, CONCAT('*:messages=10000:bytes=', quota) as quota_rule FROM mailbox WHERE username = '%u' AND active = '1'

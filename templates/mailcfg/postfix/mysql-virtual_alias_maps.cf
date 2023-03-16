@@ -1,0 +1,6 @@
+hosts = localhost
+user = pfau
+password = kM1V2K-@0Q
+dbname = pfa
+query = SELECT goto FROM alias WHERE address='%s' AND active = '1'
+

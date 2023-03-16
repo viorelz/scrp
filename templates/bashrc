@@ -1,0 +1,30 @@
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
+fi
+
+#export LS_OPTIONS="--human --color=always"
+#alias ls='ls $LS_OPTIONS'
+#alias ll='ls $LS_OPTIONS -l'
+#alias l='ls $LS_OPTIONS -Al'
+alias cp='cp'
+#
+#alias grep="grep --color"
+#alias egrep="egrep --color"
+alias tree="tree -C"
+
+alias pingg="ping google.com"
+
+alias mydump='mysqldump --opt --triggers --routines --single-transaction --compress --order-by-primary'
+alias mkphp73sock='mkdir /var/run/php73'
+alias cd73fpm='cd /etc/opt/remi/php73/php-fpm.d'
+
+function mkcd()
+{
+    if [ $# -eq 0 ]; then
+        echo "Usage: mkcd dirName"
+    else
+        mkdir $1
+        cd $1
+    fi
+}

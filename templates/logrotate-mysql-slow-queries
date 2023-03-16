@@ -1,0 +1,21 @@
+# This logname can be set in /etc/my.cnf
+# by setting the variable "log-slow-queries"
+
+
+/var/log/mysql-slow-queries.log {
+	create 640 mysql mysql
+	notifempty
+	copytruncate
+	monthly
+	size 20M
+	rotate 9
+	compress
+	prerotate
+		# just if mysqld is really running
+		if test -x /usr/bin/mysqladmin && \
+			/usr/bin/mysqladmin ping &>/dev/null
+		then
+			/usr/bin/mysqladmin flush-logs
+		fi
+	endscript
+}

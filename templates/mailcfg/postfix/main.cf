@@ -1,0 +1,100 @@
+2bounce_notice_recipient = devnull
+alias_database = hash:/etc/aliases
+alias_maps = hash:/etc/aliases
+header_checks = regexp:/etc/postfix/header_checks
+body_checks = regexp:/etc/postfix/body_checks
+
+bounce_queue_lifetime=1d
+
+mailbox_size_limit = 0
+message_size_limit = 30000000
+content_filter = amavisfeed:[127.0.0.1]:10024
+
+command_directory = /usr/sbin
+config_directory = /etc/postfix
+daemon_directory = /usr/libexec/postfix
+data_directory = /var/lib/postfix
+mailq_path = /usr/bin/mailq.postfix
+manpage_directory = /usr/share/man
+newaliases_path = /usr/bin/newaliases.postfix
+queue_directory = /var/spool/postfix
+readme_directory = /usr/share/doc/postfix-2.6.6/README_FILES
+sample_directory = /usr/share/doc/postfix-2.6.6/samples
+sendmail_path = /usr/sbin/sendmail.postfix
+
+mailbox_command =
+
+debug_peer_level = 5
+debugger_command =
+	 PATH=/bin:/usr/bin:/usr/local/bin:/usr/X11R6/bin
+	 ddd $daemon_directory/$process_name $process_id & sleep 5
+home_mailbox = Maildir/
+html_directory = no
+inet_interfaces = all
+inet_protocols = ipv4
+mail_owner = postfix
+setgid_group = postdrop
+
+myhostname = www.domainName.ro
+mynetworks = 127.0.0.0/8
+disable_vrfy_command = yes
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_authenticated_header = yes
+smtpd_sasl_local_domain = $myhostname
+smtpd_sasl_security_options = noanonymous
+broken_sasl_auth_clients = yes
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+
+#transport_maps = hash:/etc/postfix/transport
+sender_dependent_default_transport_maps = hash:/etc/postfix/transport
+virtual_alias_maps = hash:/etc/aliases,
+                     proxy:mysql:/etc/postfix/mysql-virtual_alias_maps.cf,
+                     regexp:/etc/postfix/virtual_regexp
+virtual_mailbox_base = /home/vmail
+virtual_mailbox_domains = proxy:mysql:/etc/postfix/mysql-virtual_domains_maps.cf
+virtual_mailbox_maps = proxy:mysql:/etc/postfix/mysql-virtual_mailbox_maps.cf
+virtual_mailbox_limit_maps = proxy:mysql:/etc/postfix/mysql-virtual_mailbox_limit_maps.cf
+virtual_minimum_uid = 1000
+virtual_uid_maps = static:1017
+virtual_gid_maps = static:12
+virtual_transport = lmtp:unix:private/dovecot-lmtp
+
+smtp_tls_note_starttls_offer = yes
+smtp_use_tls = yes
+smtpd_tls_auth_only = no
+smtpd_tls_loglevel = 1
+smtpd_tls_received_header = yes
+smtpd_tls_session_cache_timeout = 3600s
+
+tls_random_source = dev:/dev/urandom
+smtpd_tls_CAfile = /etc/pki/tls/certs/domainName.ro.ca.crt
+smtpd_tls_cert_file = /etc/pki/tls/certs/domainName.ro.crt
+smtpd_tls_key_file = /etc/pki/tls/private/domainName.ro.pem
+smtpd_tls_dh1024_param_file = /etc/postfix/ssl/dh_2048.pem
+smtpd_tls_dh512_param_file = /etc/postfix/ssl/dh_512.pem
+
+smtpd_tls_eecdh_grade = ultra
+tls_eecdh_strong_curve = prime256v1
+tls_eecdh_ultra_curve = secp384r1
+
+smtpd_tls_protocols= !SSLv2,!SSLv3,!TLSv1
+smtpd_tls_mandatory_protocols=!SSLv2,!SSLv3,!TLSv1
+smtpd_tls_mandatory_ciphers = high
+smtpd_tls_ciphers = high
+tls_preempt_cipherlist = yes
+smtpd_tls_mandatory_exclude_ciphers = aNULL, MD5 , DES, ADH, RC4, PSD, SRP, 3DES, eNULL
+tls_high_cipherlist=EDH+CAMELLIA:EDH+aRSA:EECDH+aRSA+AESGCM:EECDH+aRSA+SHA384:EECDH+aRSA+SHA256:EECDH:+CAMELLIA256:+AES256:+CAMELLIA128:+AES128:+SSLv3:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!DSS:!RC4:!SEED:!ECDSA:CAMELLIA256-SHA:AES256-SHA:CAMELLIA128-SHA:AES128-SHA
+smtpd_tls_eecdh_grade=ultra
+
+smtpd_client_restrictions = check_client_access hash:/etc/postfix/access, check_recipient_access hash:/etc/postfix/access
+smtpd_recipient_restrictions = permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination
+unknown_local_recipient_reject_code = 550
+error_notice_recipient = devnull
+
+
+default_destination_concurrency_limit = 1
+default_destination_rate_delay = 5s
+default_extra_recipient_limit = 10
+
+#autoresponder_destination_recipient_limit = 1

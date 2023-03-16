@@ -1,0 +1,23 @@
+{
+    "typo3conf": "TYPO3",
+    "wp-config.php": "Wordpress",
+    "Mage.php": "Magento 1.x",
+    "magento": "Magento 2.x",
+    "joomla": "Joomla",
+    "Drupal.php": "Drupal 8",
+    "drupal.js": "Drupal 7",
+    "moodledata": "Moodle",
+    "cls_ftp.php": "Kernelic",
+    "cake": "CakePHP",
+    "phpfox.class.php": "PHPFox",
+    "CodeIgniter.php": "CodeIgniter",
+    "Amf": "AmfPHP",
+    "PrestaShopAutoload.php": "PrestaSHop",
+    "smarty.inc.php": "Smarty",
+    "artisan": "Laravel",
+    "SymfonyRequirements.php": "Symfony",
+    "SymfonyStyleTest.php": "Symfony",
+    "react.js": "ReactJS",
+    "service-worker.js": "ReactJS",
+    "rails.rb": "Ruby on Rails"
+}

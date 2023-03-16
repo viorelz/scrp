@@ -1,0 +1,66 @@
+#!/bin/bash
+
+WEB_ROOT="/var/www"
+DOC_ROOT_ALT="/home/www"
+USER_NAME=$(logname)
+USER_HOME=$(eval echo ~$USER_NAME)
+HOST_NAME=$(hostname)
+CUR_DIR=$(pwd)
+
+OPTIONS=""
+OWNER="$USER_NAME:$USER_NAME"
+TARGETDIR=""
+
+if [ $# -eq 0 ] || [ $1 == "-h" ]; then
+    echo "Usage: $0 [-R] FILE|FOLDER [FILE|FOLDER]"
+    exit 0
+fi
+# parse input parameters
+while [[ $# > 0 ]]; do
+    if [[ "$1" =~ ^- ]]; then
+        OPTIONS="$1"
+    else
+        TARGETDIR="$TARGETDIR $1"
+    fi
+    shift
+done
+
+TARGET_DIR=""
+for FOLDER in $TARGETDIR; do
+    # normalize the path
+    REAL_FOLDER=$(readlink -e $FOLDER)
+    if [ -z $REAL_FOLDER ]; then
+        # the target does not exist
+        continue
+    elif [[ $REAL_FOLDER =~ ^"$USER_HOME" ]]; then
+        # the target is in the home folder of the user
+        FOLDER=$REAL_FOLDER
+    elif [[ $REAL_FOLDER =~ ^"$WEB_ROOT" ]]; then
+        WEB_DIR=$(awk '{split($0, a, "/"); print "/"a[2]"/"a[3]"/"a[4]}' <<< $REAL_FOLDER)
+        WEB_DIR_OWNER=$(stat -c "%U" $WEB_DIR)
+        if [[ $WEB_DIR_OWNER == $USER_NAME ]]; then
+            FOLDER=$REAL_FOLDER
+        fi
+    elif [[ $REAL_FOLDER =~ ^"$DOC_ROOT_ALT" ]]; then
+        # the target is in the document root
+        FOLDER=$REAL_FOLDER
+    else
+        # not allowed to do this elsewhere
+        echo "You are not allowed to change ownership of $FOLDER"
+        continue
+    fi
+    # check if the file/folder exists
+    if [ ! -d $FOLDER ] && [ ! -f $FOLDER ]; then
+        echo "$FOLDER does not exist"
+    else
+        # append it to the terget list
+        TARGET_DIR="$TARGET_DIR $FOLDER"
+    fi
+done
+if [[ -z $TARGET_DIR ]]; then
+    echo "No target"
+    exit
+fi
+
+# do the job
+chown $OPTIONS $OWNER $TARGET_DIR

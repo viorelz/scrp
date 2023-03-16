@@ -1,0 +1,204 @@
+#!/bin/bash
+
+DEBUG=1
+APP_ROOT=$(dirname "$0")
+pwgenPath="${APP_ROOT}/rpwgen.py"
+if [ ! -f "$pwgenPath" ]; then
+    echo "No rpwgen.py found: $pwgenPath, exiting!"
+    exit
+fi
+
+
+if ! command -v python3; then
+    echo "No python3 found!"
+    exit
+fi
+
+if [ ! $# -eq 2 ] && [ ! $# -eq 3 ] && [ ! $# -eq 4 ]; then
+    echo "Usage $0 fqdn phpver [separatePool] [lock/unlock]"
+    echo "phpver could be 72, 73 or 74"
+    echo "separatePool could be present or not"
+    exit
+fi
+
+separatePool=0
+if [[ "$3" =~ "separatePool" ]] || [[ "$4" =~ "separatePool" ]]; then
+    separatePool=1
+    echo "Site will have a separate fpm Pool!!!"
+else
+    echo "Site will NOT have a separate fpm Pool!!!"
+fi
+echo -e "${BLUEF}You still have 5 seconds to change your mind${NOCOLOR}"
+for i in $(seq 5); do
+  echo -n '.'; sleep 1
+done
+lock=1
+if [[ "$3" =~ "unlock" ]] || [[ "$4" =~ "unlock" ]]; then
+    lock=0
+else
+    echo "Site will be locked with http auth!!!"
+    echo "-------------------------------------"
+fi
+
+domainname=$1
+phpver=$2
+if [ "$phpver" -eq 72 ]; then
+	portname="9002"
+fi
+if [ "$phpver" -eq 73 ]; then
+	portname="9003"
+fi
+if [ "$phpver" -eq 74 ]; then
+	portname="9004"
+fi
+echo "$domainname" | grep -Eo '^[a-z0-9]+([-\.]{1}[a-z0-9]+)*\.[a-z]{2,6}?$'
+if [ $? -gt 0 ]; then
+    echo "Domain name error, exiting!"
+    exit 4
+fi
+sitename=$(echo $domainname | grep -Eo '^([a-zA-Z0-9-]+)')
+sitenameLen=$(echo $sitename | wc -c)
+if [ "$sitenameLen" -gt 15 ]; then
+    echo "prefix longer than 15: ${sitename}, exiting!"
+    exit 5;
+fi
+
+ftpsshuser="$sitename"
+mysqluser="${sitename}u"
+#mysqlpass=`pwgen --secure --ambiguous 12 1`
+#sitepass=`pwgen --secure --ambiguous 12 1`
+#ftpsshpass=`pwgen --secure --ambiguous 12 1`
+mysqlpass=$($pwgenPath)
+sitepass=$($pwgenPath)
+ftpsshpass=$($pwgenPath)
+
+
+shorthost=$(hostname -s)
+centosVer=$(grep -Eo '([0-9\.]+)' /etc/centos-release | cut -c1)
+
+if [ $separatePool -eq 0 ]; then
+  if [ -f "${APP_ROOT}/templates/httpdCentOS${centosVer}/vhost_${shorthost}_template.conf" ]; then
+      vhosttemplatefile="${APP_ROOT}/templates/httpdCentOS${centosVer}/vhost_${shorthost}_template.conf"
+  else
+      vhosttemplatefile="${APP_ROOT}/templates/httpdCentOS${centosVer}/vhost_live_template.conf"
+  fi
+else
+  if [ -f "${APP_ROOT}/templates/httpdCentOS${centosVer}/vhostLiveIPool_${shorthost}.conf" ]; then
+    vhosttemplatefile="${APP_ROOT}/templates/httpdCentOS${centosVer}/vhostLiveIPool_${shorthost}.conf"
+  else
+      vhosttemplatefile="${APP_ROOT}/templates/httpdCentOS${centosVer}/vhostLiveIPool.conf"
+  fi
+fi
+
+if [ ! -f "$vhosttemplatefile" ]; then
+    echo "template $vhosttemplatefile not found, exiting!!!"
+    exit 1
+fi
+
+phpfpmpool="${APP_ROOT}/templates/httpdCentOS${centosVer}/php-fpm.pool"
+if [ ! -f "$phpfpmpool" ]; then
+    echo "template $phpfpmpool not found, exiting!!!"
+    exit 1
+fi
+
+if [ -f "${APP_ROOT}/templates/httpdCentOS${centosVer}/vhostIP.conf" ]; then
+    vhostIP=$(head -n 1 "${APP_ROOT}/templates/httpdCentOS${centosVer}/vhostIP.conf")
+fi
+
+if [ ! $DEBUG -eq 0 ]; then
+  echo "centosVer: ${centosVer}"
+  echo "using $vhosttemplatefile"
+  echo "using $phpfpmpool"
+  echo "using $vhostIP"
+fi
+
+errcode=0
+
+#check if named database exists
+DBNAMES="$(/usr/bin/mysql -e "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '${sitename}'\G")" || errcode=1
+echo "$DBNAMES"
+
+if [[ "$DBNAMES" =~ $sitename ]]; then
+    echo "Database already exists... this is probably because a site with the subdomain $sitename already exists, exiting!"
+    echo
+    errcode=1
+fi
+
+if [ -d "/var/www/${domainname}" ]; then
+    echo "Directory /var/www/${domainname} already exists, exiting!"
+    errcode=2
+fi
+
+if [ ! $errcode -eq 0 ]; then
+    exit $errcode
+fi
+
+echo "Creating system user"
+useradd "$ftpsshuser"
+echo "$ftpsshpass" | passwd "$ftpsshuser" --stdin
+usermod -aG "$ftpsshuser" apache
+
+if [ ! $separatePool -eq 0 ]; then
+    cp "$phpfpmpool" "/etc/opt/remi/php${phpver}/php-fpm.d/${ftpsshuser}.conf"
+    sed -i "s/USERNAME/${sitename}/g" "/etc/opt/remi/php${phpver}/php-fpm.d/${sitename}.conf"
+    sed -i "s/PHPVER/${phpver}/g" "/etc/opt/remi/php${phpver}/php-fpm.d/${sitename}.conf"
+fi
+
+systemctl restart httpd.service
+systemctl restart "php${phpver}-php-fpm.service"
+
+echo "Creating sudo permissions"
+echo "${ftpsshuser}  ALL=(ALL)       /usr/bin/rchown" | EDITOR='tee -a' /usr/sbin/visudo
+
+echo "Creating /etc/httpd/vhosts.d/${domainname}.conf"
+cp "$vhosttemplatefile" "/etc/httpd/vhosts.d/${domainname}.conf"
+
+if [ $lock -eq 1 ]; then
+    echo "Creating htpass file"
+    htpasswd -cb "/var/www/.htpass.${domainname}" "$sitename" "$sitepass"
+fi
+
+echo "Creating docroot /var/www/${domainname}"
+mkdir -p "/var/www/${domainname}"
+chown "${ftpsshuser}:${ftpsshuser}" "/var/www/${domainname}"
+chmod 750 "/var/www/${domainname}"
+touch "/var/www/${domainname}/index.html"
+
+echo "Replacing sitename, IP and port"
+sed -i "s/PREFIX/${sitename}/g" "/etc/httpd/vhosts.d/${domainname}.conf"
+sed -i "s/DOMAINNAME/${domainname}/g" "/etc/httpd/vhosts.d/${domainname}.conf"
+sed -i "s/PORTNAME/${portname}/g" "/etc/httpd/vhosts.d/${domainname}.conf"
+sed -i "s/PHPVER/${phpver}/g" "/etc/httpd/vhosts.d/${domainname}.conf"
+sed -i "s/USERNAME/${ftpsshuser}/g" "/etc/httpd/vhosts.d/${domainname}.conf"
+if [ ! -z "$vhostIP" ]; then
+    sed -i "s/1\.2\.3\.4/${vhostIP}/g" "/etc/httpd/vhosts.d/${domainname}.conf"
+fi
+
+/usr/bin/systemctl reload httpd.service
+
+echo
+echo "http://${domainname}"
+if [ $lock -eq 1 ]; then
+    echo "$sitename / $sitepass   -- pt a accesa site-ul e nevoie de datele astea"
+fi
+echo
+echo "ssh/scp:  ${domainname}"
+echo "u/p:  ${ftpsshuser} / ${ftpsshpass}"
+echo
+echo "docroot:  /var/www/${domainname}"
+echo "logs:  /var/www/log"
+echo
+echo "http://${domainname}/phpmyadmin/"
+./mysql_create_db.sh "$sitename" "$mysqluser" "$mysqlpass"
+echo
+echo
+/usr/bin/rpm -qa --queryformat '%{NAME}-%{VERSION}\n' | grep php | sort | head -n 1
+/usr/local/bin/composer --version 2>/dev/null
+echo -n "MySQL: "; /usr/bin/mysql --version | egrep -o '(5\.[0-9\.]+)'
+
+
+echo
+echo "NOTA:  Gazduirea pe acest server are rol TEMPORAR"
+echo "daca nu se fac modificari de fisiere timp de 3 luni, ${domainname} se va sterge automat!!!"
+
+

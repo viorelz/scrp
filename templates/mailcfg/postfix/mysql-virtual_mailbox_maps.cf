@@ -1,0 +1,5 @@
+hosts = localhost
+user = pfau
+password = kM1V2K-@0Q
+dbname = pfa
+query = SELECT CONCAT(maildir, 'Maildir/') FROM mailbox WHERE username='%s' AND active = '1'

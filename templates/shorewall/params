@@ -1,0 +1,11 @@
+GWDMN=net:gw.domain.tld
+GWMAIL=net:mail.domain.tld
+DMNAB=net:alba.domain.tld
+#DMNIS=net:iasi.domain.tld
+#DMNREGHIN=net:reghin.domain.tld
+DMNCLUJ=net:cluj.domain.tld
+DMNSIBIU=net:sibiu.domain.tld
+
+ALTSRC=net:host22.domain.tld
+
+#LAST LINE -- DO NOT REMOVE

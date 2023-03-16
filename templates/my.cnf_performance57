@@ -1,0 +1,90 @@
+[client]
+port    = 3306
+socket    = /var/lib/mysql/mysql.sock
+
+[mysqld_safe]
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+socket    = /var/lib/mysql/mysql.sock
+nice    = 0
+
+[mysqld]
+user    = mysql
+pid-file  = /var/run/mysqld/mysqld.pid
+socket    = /var/lib/mysql/mysql.sock
+port      = 3306
+basedir   = /usr
+datadir   = /var/lib/mysql
+tmpdir    = /tmp
+skip-external-locking
+default-storage-engine = InnoDB
+
+bind-address    = 127.0.0.1
+ 
+
+myisam_recover_options = BACKUP
+log_error              = /var/log/mysqld.log
+expire_logs_days       = 10
+#max_binlog_size       = 100M
+
+
+#slow_query_log = 1
+#long_query_time = 1
+#slow_query_log_file = /var/log/mysql-slow-queries.log
+
+tmpdir=/tmp
+max_connections = 100
+wait_timeout=60
+interactive_timeout=120
+lock_wait_timeout=60
+key_buffer_size = 16M
+max_allowed_packet = 100M
+table_open_cache = 4096
+open_files_limit = 65535
+tmp_table_size=256M
+max_heap_table_size=256M
+join_buffer_size = 256k
+sort_buffer_size = 512k
+read_buffer_size = 512k
+read_rnd_buffer_size = 512k
+bulk_insert_buffer_size = 8M
+
+thread_stack       = 192K
+thread_cache_size  = 16
+thread_pool_size   = 16
+
+query_cache_size=0
+query_cache_type=0
+
+
+innodb
+innodb_buffer_pool_size                  = 2048M
+innodb_buffer_pool_instances             = 2
+innodb_checksums
+innodb_doublewrite
+innodb_fast_shutdown                     = 0
+innodb_flush_log_at_trx_commit           = 2
+innodb_flush_method                      = O_DIRECT
+innodb_lock_wait_timeout                 = 30
+innodb_max_dirty_pages_pct               = 90
+innodb_max_purge_lag                     = 0
+innodb_open_files                        = 300
+innodb_status_file
+innodb_thread_concurrency                = 4
+#innodb_buffer_pool_instances             = 4
+innodb_log_buffer_size                   = 8M
+innodb_file_format                       = Barracuda
+innodb_file_format_max                   = Barracuda
+innodb_large_prefix                      = 1
+
+innodb_file_per_table                    = 1
+innodb_log_file_size                     = 256M
+
+
+[mysqldump]
+quick
+quote-names
+max_allowed_packet = 128M
+[mysql]
+[isamchk]
+key_buffer    = 16M
